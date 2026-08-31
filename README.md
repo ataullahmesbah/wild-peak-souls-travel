@@ -151,26 +151,7 @@ field, so running it repeatedly converges instead of duplicating rows.
 
 ---
 
-## Seed data and demo accounts
 
-All demo accounts share the password from `SEED_SUPER_ADMIN_PASSWORD`
-(default `ChangeMe#2026`).
-
-| Email | Role |
-| --- | --- |
-| `admin@wildpeaksouls.com` | SUPER_ADMIN |
-| `ops@wildpeaksouls.com` | ADMIN |
-| `content@wildpeaksouls.com` | CONTENT_MANAGER |
-| `support@wildpeaksouls.com` | SUPPORT_AGENT |
-| `finance@wildpeaksouls.com` | FINANCE_MANAGER |
-| `traveller@example.com` | CUSTOMER |
-
-> **Change these passwords immediately in any shared or public environment.**
-
-The seed also loads 6 destinations, 8 activities, 6 events, 5 tours, 5
-properties (12 room types), 4 visa countries with 5 visa types, 8 airports, 12
-flight routes, 13 train services, 8 services, 3 travel guides, 6 policy pages,
-16 FAQ items, 35 settings, a notice and an advertisement.
 
 ---
 
