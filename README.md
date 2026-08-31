@@ -369,41 +369,110 @@ These are deliberate scope boundaries, not defects:
 | `docs/UPGRADING.md` | **Upgrading a live v1 database to v2 without losing data** |
 # wild-peak-souls-travel
 
+## 👨‍💻 Developer & Project Owner
 
-👨‍💻 Developer & Project Owner
 <div align="center">
-Ataullah Mesbah
-High-Level, Super-Fast Full-Stack Developer
-🚀 About Me
-I'm a passionate full-stack developer with expertise in building scalable, high-performance web applications. I specialize in modern JavaScript ecosystems, cloud-native architectures, and delivering pixel-perfect user experiences.
 
-What I Do:
+# Ataullah Mesbah
 
-🏗️ Architecture: Design scalable, maintainable system architectures
+### High-Level • Super-Fast • Full-Stack Developer
 
-⚡ Performance: Optimize applications for speed and efficiency
-
-🔒 Security: Implement robust security practices and data protection
-
-🎨 UX: Create intuitive, beautiful user interfaces
-
-☁️ Cloud: Deploy and manage applications on Vercel, AWS, and Docker
-
-📫 Connect With Me
-<div align="center">
-https://img.shields.io/badge/%F0%9F%8C%90_Portfolio-ataullahmesbah.com-000000?style=for-the-badge
-https://img.shields.io/badge/%F0%9F%93%A7_Contact_Page-ataullahmesbah.com/contact-0A66C2?style=for-the-badge
-https://img.shields.io/badge/%F0%9F%90%99_GitHub-github.com/ataullahmesbah-181717?style=for-the-badge
-https://img.shields.io/badge/%F0%9F%94%97_LinkedIn-ataullahmesbah-0A66C2?style=for-the-badge
+Building **scalable, secure, high-performance digital products** with modern technologies.
 
 </div>
-🔗 Backlink to Developer
+
+---
+
+## 🚀 About Me
+
+I'm a passionate **Full-Stack Developer & Systems Engineer** focused on building scalable, high-performance web applications and digital systems.
+
+I specialize in modern JavaScript ecosystems, cloud-native architectures, database-driven applications, performance optimization, and creating polished user experiences.
+
+### What I Do
+
+| Area                       | Focus                                                         |
+| -------------------------- | ------------------------------------------------------------- |
+| 🏗️ **Architecture**       | Scalable, maintainable & production-ready system architecture |
+| ⚡ **Performance**          | Fast-loading, optimized & efficient applications              |
+| 🔒 **Security**            | Secure authentication, authorization & data protection        |
+| 🎨 **UI/UX**               | Clean, responsive & intuitive user experiences                |
+| ☁️ **Cloud & DevOps**      | Vercel, AWS, Docker & modern deployment workflows             |
+| 🗄️ **Backend & Database** | APIs, PostgreSQL, MongoDB & data-driven systems               |
+| 🤖 **AI & Automation**     | AI-powered workflows, automation & intelligent systems        |
+
+---
+
+## 🛠️ Core Technologies
+
 <div align="center">
-This project is proudly developed by
 
-https://img.shields.io/badge/%E2%AC%85%EF%B8%8F_Back_to_Developer_Portfolio-ataullahmesbah.com-000000?style=for-the-badge&logo=vercel
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge\&logo=next.js\&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge\&logo=react\&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge\&logo=typescript\&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge\&logo=node.js\&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge\&logo=postgresql\&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge\&logo=prisma\&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge\&logo=tailwindcss\&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge\&logo=docker\&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge\&logo=vercel\&logoColor=white)
 
-Need a similar project?
-📩 Hire me — Let's build something amazing together!
+</div>
+
+---
+
+## 📫 Connect With Me
+
+<div align="center">
+
+<a href="https://ataullahmesbah.com">
+  <img src="https://img.shields.io/badge/🌐_Portfolio-ataullahmesbah.com-000000?style=for-the-badge" alt="Portfolio">
+</a>
+
+<a href="https://ataullahmesbah.com/contact">
+  <img src="https://img.shields.io/badge/📧_Contact-Get_in_Touch-0A66C2?style=for-the-badge" alt="Contact">
+</a>
+
+<a href="https://github.com/ataullahmesbah">
+  <img src="https://img.shields.io/badge/🐙_GitHub-ataullahmesbah-181717?style=for-the-badge&logo=github" alt="GitHub">
+</a>
+
+<a href="https://www.linkedin.com/in/ataullahmesbah">
+  <img src="https://img.shields.io/badge/🔗_LinkedIn-Ataullah_Mesbah-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn">
+</a>
+
+</div>
+
+---
+
+## 🔗 Backlink to Developer
+
+<div align="center">
+
+### This project is proudly developed by
+
+<a href="https://ataullahmesbah.com">
+  <img src="https://img.shields.io/badge/⬅️_Back_to_Developer_Portfolio-ataullahmesbah.com-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Back to Developer Portfolio">
+</a>
+
+<br><br>
+
+**Need a similar project?**
+
+📩 **Hire me — Let's build something amazing together!**
+
+<a href="https://ataullahmesbah.com/contact">
+  <img src="https://img.shields.io/badge/💼_Work_With_Me-Contact_Ataullah_Mesbah-0A66C2?style=for-the-badge" alt="Hire Me">
+</a>
+
+</div>
+
+---
+
+<div align="center">
+
+### ⚡ Built with passion, engineered for performance.
+
+**© Ataullah Mesbah**
 
 </div>
