@@ -1,0 +1,470 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Wild Peak Souls design tokens.
+   Every colour used anywhere in the product resolves through one of these
+   semantic variables. Components never hardcode a hex value, so the light and
+   dark themes stay in sync and a rebrand is a single-file change.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --radius-card: 1.25rem;
+  --radius-field: 0.75rem;
+
+  /*
+   * Registered here rather than only on :root so Tailwind generates
+   * `shadow-soft` / `shadow-lift` utilities. Without this every use has to
+   * spell out shadow-[var(--shadow-soft)], which is how 269 inline var()
+   * utilities accumulated across the codebase in the first place.
+   */
+  --shadow-soft: 0 1px 2px rgb(13 27 18 / 0.05), 0 8px 24px -12px rgb(13 27 18 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(13 27 18 / 0.06), 0 18px 40px -20px rgb(13 27 18 / 0.22);
+
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-fg);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-fg);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-fg);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-fg);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+}
+
+/* Light theme — the default. */
+:root {
+  --bg: #f6f9f6;
+  --fg: #0d1b12;
+  --card: #ffffff;
+  --card-fg: #0d1b12;
+  --muted: #eef3ee;
+  --muted-fg: #5b6b5f;
+  --border: #dfe8e0;
+  --input: #ffffff;
+  --ring: #1f7a4d;
+
+  --primary: #14724a;
+  --primary-fg: #ffffff;
+  --primary-soft: #e3f3ea;
+  --secondary: #0f2e1f;
+  --secondary-fg: #ffffff;
+  --accent: #b8862b;
+  /* Dark text on the gold, not white: white gives 3.24:1, under the 4.5:1
+     minimum for the small text that sits on an accent chip. This pairing is
+     5.08:1, and matches the dark theme, which already puts dark text on gold. */
+  --accent-fg: #2a1d06;
+
+  --success: #16794f;
+  --success-soft: #e1f4ea;
+  /* Darkened from #a86200, which rendered warning text on warning-soft at
+     4.23:1 — just under the 4.5:1 minimum. This pair measures 5.31:1. */
+  --warning: #925500;
+  --warning-soft: #fdf0dd;
+  --destructive: #b3261e;
+  --destructive-soft: #fbe6e4;
+  --info: #17607f;
+  --info-soft: #e0f0f7;
+
+  --shadow-soft: 0 1px 2px rgb(13 27 18 / 0.05), 0 8px 24px -12px rgb(13 27 18 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(13 27 18 / 0.06), 0 18px 40px -20px rgb(13 27 18 / 0.22);
+  --glow: 0 0 0 1px rgb(20 114 74 / 0.12), 0 12px 40px -16px rgb(20 114 74 / 0.35);
+}
+
+/* Dark theme — applied by the `dark` class on <html>. */
+.dark {
+  --bg: #07120c;
+  --fg: #e8f0ea;
+  --card: #0e1c14;
+  --card-fg: #e8f0ea;
+  --muted: #142519;
+  --muted-fg: #9bb0a2;
+  --border: #1e3427;
+  --input: #0e1c14;
+  --ring: #3fbc84;
+
+  --primary: #35b277;
+  --primary-fg: #05170e;
+  --primary-soft: #102c1e;
+  --secondary: #d7e6dc;
+  --secondary-fg: #07120c;
+  --accent: #d9a744;
+  --accent-fg: #1a1204;
+
+  --success: #3fbc84;
+  --success-soft: #0f2a1d;
+  --warning: #dfa63c;
+  --warning-soft: #2b1f0a;
+  --destructive: #f0776c;
+  --destructive-soft: #2c1210;
+  --info: #55b6d8;
+  --info-soft: #0c2530;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 40px -20px rgb(0 0 0 / 0.75);
+  --glow: 0 0 0 1px rgb(53 178 119 / 0.2), 0 12px 40px -16px rgb(53 178 119 / 0.35);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible, consistent focus for keyboard users on every interactive element. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 0.4rem;
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--fg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+    border: 2px solid var(--muted);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-fg);
+  }
+}
+
+@layer components {
+  .wps-card {
+    background-color: var(--card);
+    color: var(--card-fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .wps-card-interactive {
+    transition:
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.25s ease;
+  }
+
+  .wps-card-interactive:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+  }
+
+  .wps-glow {
+    box-shadow: var(--glow);
+  }
+
+  /*
+   * Modal shell for <dialog>. Using the element rather than a div means focus
+   * trapping, Escape and the top layer are the browser's job, not ours — the
+   * three things hand-rolled modals reliably get wrong.
+   */
+  .wps-dialog {
+    margin: auto;
+    width: min(28rem, calc(100vw - 2rem));
+    padding: 0;
+    background-color: var(--card);
+    color: var(--card-fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .wps-dialog::backdrop {
+    background: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Soft radial wash used behind heroes and section headers. */
+  .wps-aurora {
+    position: relative;
+    isolation: isolate;
+    /*
+     * The wash below bleeds 10% past each edge, which on a phone is enough to
+     * widen the document and give every page a horizontal scrollbar. `clip`
+     * rather than `hidden` because it must not become a scroll container, and
+     * pairing it with `visible` on the other axis keeps sticky headers and
+     * dropdowns working.
+     */
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .wps-aurora::before {
+    content: '';
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 70%;
+    z-index: -1;
+    background:
+      radial-gradient(50% 60% at 20% 0%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 70%),
+      radial-gradient(40% 50% at 85% 10%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 70%);
+    filter: blur(10px);
+    pointer-events: none;
+  }
+
+  .wps-skeleton {
+    background: linear-gradient(90deg,
+        var(--muted) 25%,
+        color-mix(in oklab, var(--muted) 60%, var(--card)) 50%,
+        var(--muted) 75%);
+    background-size: 200% 100%;
+    animation: wps-shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--radius-field);
+  }
+
+  .wps-prose {
+    line-height: 1.75;
+    color: var(--fg);
+  }
+
+  .wps-prose>*+* {
+    margin-top: 1rem;
+  }
+
+  .wps-prose h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 2rem;
+  }
+
+  .wps-prose h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: 1.75rem;
+  }
+
+  .wps-prose h4,
+  .wps-prose h5,
+  .wps-prose h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+  }
+
+  .wps-prose h5 {
+    color: var(--muted-fg);
+  }
+
+  .wps-prose h6 {
+    color: var(--muted-fg);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8125rem;
+  }
+
+  .wps-prose ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  .wps-prose ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+  }
+
+  .wps-prose li+li {
+    margin-top: 0.375rem;
+  }
+
+  .wps-prose strong {
+    font-weight: 600;
+  }
+
+  /* Article bodies are authored in Markdown and rendered as React elements by
+     src/lib/markdown.tsx. Every block that renderer can emit needs a style
+     here, or a table or a code block would land unformatted on the page. */
+  .wps-prose figure>img {
+    display: block;
+  }
+
+  .wps-prose table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wps-prose th {
+    white-space: nowrap;
+  }
+}
+
+@keyframes wps-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes wps-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wps-animate-in {
+  animation: wps-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/*
+ * Loading screen motion.
+ *
+ * Every keyframe set below ends on the state the element should hold when
+ * still, because the reduced-motion block collapses animations to a single
+ * 0.01ms pass — the browser lands on the last frame and stays there. A sweep
+ * that ended off-screen would simply vanish for those users, so the bar gets
+ * an explicit resting style instead.
+ */
+@keyframes wps-draw {
+  0% {
+    stroke-dashoffset: 96;
+  }
+
+  55%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.wps-draw {
+  stroke-dasharray: 96;
+  animation: wps-draw 1.9s ease-in-out infinite;
+}
+
+@keyframes wps-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.wps-progress {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.wps-progress::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: wps-sweep 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes wps-breathe {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.75;
+    transform: scale(0.965);
+  }
+}
+
+.wps-breathe {
+  animation: wps-breathe 2.4s ease-in-out infinite;
+}
+
+/* Honour the OS reduced-motion setting everywhere, including our own keyframes. */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .wps-card-interactive:hover {
+    transform: none;
+  }
+
+  /* A sweep frozen at its end frame is invisible; show a plain filled bar. */
+  .wps-progress::after {
+    position: static;
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    background: var(--primary);
+    opacity: 0.55;
+  }
+}

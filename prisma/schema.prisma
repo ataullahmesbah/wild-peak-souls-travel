@@ -1,0 +1,1909 @@
+// prisma/schema.prisma
+// Wild Peak Souls — Prisma schema
+// PostgreSQL. See docs/ARCHITECTURE.md for the domain map.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // On serverless this is the provider's pooled (PgBouncer) connection string.
+  // Migrations need a session connection instead, so they are run with
+  // DATABASE_URL overridden for that one command — see docs/DEPLOYMENT.md.
+  // `directUrl` is deliberately not declared here: Prisma hard-fails when a
+  // declared env var is missing, which would break every non-serverless
+  // deployment that has no reason to set it.
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+  PENDING_VERIFICATION
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+  CONTENT_MANAGER
+  SUPPORT_AGENT
+  FINANCE_MANAGER
+  CUSTOMER
+}
+
+enum OtpPurpose {
+  LOGIN
+  SIGNUP
+  PASSWORD_RESET
+  PHONE_VERIFY
+  EMAIL_VERIFY
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  SOLD_OUT
+  CANCELLED
+  COMPLETED
+  ARCHIVED
+}
+
+enum Difficulty {
+  EASY
+  MODERATE
+  CHALLENGING
+  EXTREME
+}
+
+enum TourType {
+  FIXED_DATE
+  FLEXIBLE_DATE
+  CUSTOMIZABLE
+}
+
+enum AccommodationType {
+  HOTEL
+  RESORT
+  HOMESTAY
+  TREEHOUSE
+  COTTAGE
+  VILLA
+  HOSTEL
+  GUEST_HOUSE
+  CAMP
+}
+
+enum ProductType {
+  EVENT
+  TOUR
+  ACTIVITY
+  ACCOMMODATION
+  CUSTOM
+  SERVICE
+}
+
+enum BookingStatus {
+  PENDING
+  PAYMENT_PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING_VERIFICATION
+  PAID
+  PARTIALLY_PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  SSLCOMMERZ
+  BANK_TRANSFER
+  CASH
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  NEGOTIATING
+  IN_PROGRESS
+  CONFIRMED
+  RESOLVED
+  COMPLETED
+  CANCELLED
+  CLOSED
+}
+
+enum VisaRequestStatus {
+  NEW
+  CONTACTED
+  DOCUMENTS_REQUESTED
+  DOCUMENTS_RECEIVED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum SupportStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  BOOKING
+  PAYMENT
+  VISA
+  SUPPORT
+  MESSAGE
+  SYSTEM
+  MARKETING
+  SECURITY
+  ADMIN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// The phase a contest is in. Dates decide what the public sees; this decides
+/// whether the contest exists publicly at all.
+enum ContestStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContestEntryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SHORTLISTED
+  WINNER
+}
+
+enum NoticeType {
+  INFO
+  WARNING
+  SUCCESS
+  IMPORTANT
+  MAINTENANCE
+}
+
+enum AdFrequencyWindow {
+  SESSION
+  DAY
+  WEEK
+  EVER
+}
+
+enum AdPlacement {
+  HOME_BILLBOARD
+  HOME_MODAL
+  SIDEBAR
+  FOOTER
+  LISTING_BANNER
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum MessageType {
+  CUSTOMER
+  STAFF
+  INTERNAL_NOTE
+  SYSTEM
+}
+
+enum WishlistItemType {
+  DESTINATION
+  EVENT
+  TOUR
+  ACTIVITY
+  ACCOMMODATION
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+model User {
+  id              String     @id @default(cuid())
+  name            String
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String?
+  image           String?
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  roles                UserRole[]
+  sessions             Session[]
+  oauthAccounts        OAuthAccount[]
+  otpChallenges        OtpChallenge[]
+  passwordResetTokens  PasswordResetToken[]
+  bookings             Booking[]
+  reviews              Review[]
+  notifications        Notification[]
+  wishlistItems        WishlistItem[]
+  supportTokens        SupportToken[]        @relation("SupportCustomer")
+  assignedTokens       SupportToken[]        @relation("SupportAssignee")
+  supportMessages      SupportMessage[]
+  conversations        Conversation[]        @relation("ConversationCustomer")
+  conversationSeats    ConversationParticipant[]
+  messages             Message[]
+  visaRequests         VisaRequest[]
+  assignedVisaRequests VisaRequest[]         @relation("VisaAssignee")
+  contactRequests      ContactRequest[]
+  assignedContacts     ContactRequest[]      @relation("ContactAssignee")
+  customTourRequests   CustomTourRequest[]
+  assignedCustomTours  CustomTourRequest[]   @relation("CustomTourAssignee")
+  flightInquiries      FlightInquiry[]
+  assignedFlights      FlightInquiry[]       @relation("FlightAssignee")
+  auditLogs            AuditLog[]
+  mediaUploads         MediaAsset[]
+  verifiedPayments     Payment[]             @relation("PaymentVerifier")
+  createdTransactions  FinancialTransaction[]
+  createdExpenses      Expense[]             @relation("ExpenseCreator")
+  ownedExpenses        Expense[]             @relation("ExpenseEmployee")
+  salaryRecords        SalaryRecord[]
+  settingUpdates       Setting[]
+  posts                Post[]                @relation("PostAuthor")
+  postComments         PostComment[]         @relation("CommentAuthor")
+  moderatedComments    PostComment[]         @relation("CommentModerator")
+  contestEntries       ContestEntry[]        @relation("ContestEntrant")
+  moderatedEntries     ContestEntry[]        @relation("ContestEntryModerator")
+  contestVotes         ContestVote[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_user_name")
+  @@index([email(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_user_email")
+  @@index([phone(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_user_phone")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        RoleName @unique
+  label       String
+  description String?
+  systemRole  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+  pageAccess  RolePageAccess[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  module      String
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@index([module])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  lastSeenAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model OtpChallenge {
+  id          String     @id @default(cuid())
+  userId      String?
+  identifier  String
+  purpose     OtpPurpose
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5)
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([identifier, purpose])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RateLimitCounter {
+  id        String   @id @default(cuid())
+  bucket    String
+  windowEnd DateTime
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([bucket, windowEnd])
+  @@index([windowEnd])
+}
+
+// ---------------------------------------------------------------------------
+// Media & settings
+// ---------------------------------------------------------------------------
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  provider  String   @default("cloudinary")
+  publicId  String?
+  url       String
+  secureUrl String?
+  type      String   @default("image")
+  mimeType  String?
+  width     Int?
+  height    Int?
+  size      Int?
+  /// Video length in whole seconds. Read back from Cloudinary rather than the
+  /// browser, because the entry rules cap videos at 20 seconds.
+  durationSeconds Int?
+  altText   String?
+  folder    String?
+  createdById String?
+  createdAt DateTime @default(now())
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  destinationCovers Destination[]  @relation("DestinationCover")
+  destinationGallery DestinationGallery[]
+  eventCovers       Event[]        @relation("EventCover")
+  eventGallery      EventGallery[]
+  tourCovers        Tour[]         @relation("TourCover")
+  activityCovers    Activity[]     @relation("ActivityCover")
+  accommodationCovers Accommodation[] @relation("AccommodationCover")
+  roomTypeCovers    RoomType[]     @relation("RoomTypeCover")
+  visaCountryFlags  VisaCountry[]  @relation("VisaCountryFlag")
+  advertisements    Advertisement[]
+  expenseReceipts   Expense[]
+  postCovers        Post[]         @relation("PostCover")
+  heroSlides        HeroSlide[]    @relation("HeroMedia")
+  contestCovers     Contest[]      @relation("ContestCover")
+  contestPrizes     ContestPrize[]
+  contestJudges     ContestJudge[]
+  contestSponsors   ContestSponsor[]
+  contestGallery    ContestGalleryItem[]
+  contestEntries    ContestEntry[]
+
+  @@index([folder])
+  @@index([createdAt])
+}
+
+model Setting {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  value       String
+  type        SettingType @default(STRING)
+  category    String      @default("general")
+  isSecret    Boolean     @default(false)
+  label       String?
+  description String?
+  updatedById String?
+  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime    @default(now())
+
+  updatedBy User? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// Travel catalogue
+// ---------------------------------------------------------------------------
+
+model Destination {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  country          String        @default("Bangladesh")
+  region           String?
+  shortDescription String?
+  description      String?
+  bestTimeToVisit  String?
+  travelTips       String?
+  latitude         Float?
+  longitude        Float?
+  coverMediaId     String?
+  featured         Boolean       @default(false)
+  sortOrder        Int           @default(0)
+  status           ContentStatus @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  coverMedia     MediaAsset?          @relation("DestinationCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  gallery        DestinationGallery[]
+  events         Event[]
+  tours          Tour[]
+  activities     Activity[]
+  accommodations Accommodation[]
+
+  @@index([status])
+  @@index([featured])
+  @@index([country])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_destination_name")
+  @@index([region(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_destination_region")
+  @@index([shortDescription(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_destination_shortdescription")
+}
+
+model DestinationGallery {
+  id            String @id @default(cuid())
+  destinationId String
+  mediaId       String
+  sortOrder     Int    @default(0)
+
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  media       MediaAsset  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([destinationId, mediaId])
+  @@index([destinationId])
+}
+
+model Event {
+  id               String      @id @default(cuid())
+  title            String
+  slug             String      @unique
+  shortDescription String?
+  description      String?
+  destinationId    String?
+  eventType        String?
+  coverMediaId     String?
+  startAt          DateTime
+  endAt            DateTime
+  duration         String?
+  capacity         Int         @default(0)
+  reservedSeats    Int         @default(0)
+  price            Decimal     @db.Decimal(12, 2)
+  discountPrice    Decimal?    @db.Decimal(12, 2)
+  bookingDeadline  DateTime?
+  difficulty       Difficulty  @default(MODERATE)
+  meetingPoint     String?
+  transport        String?
+  accommodation    String?
+  meals            String?
+  travelTips       String?
+  additionalInfo   String?
+  featured         Boolean     @default(false)
+  status           EventStatus @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  destination    Destination?         @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  coverMedia     MediaAsset?          @relation("EventCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  gallery        EventGallery[]
+  itinerary      EventItinerary[]
+  options        EventOption[]
+  policies       EventPolicy[]
+  eventActivities EventActivity[]
+
+  @@index([status])
+  @@index([startAt])
+  @@index([destinationId])
+  @@index([featured])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_event_title")
+  @@index([shortDescription(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_event_shortdescription")
+}
+
+model EventGallery {
+  id        String @id @default(cuid())
+  eventId   String
+  mediaId   String
+  sortOrder Int    @default(0)
+
+  event Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  media MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, mediaId])
+  @@index([eventId])
+}
+
+model EventActivity {
+  eventId    String
+  activityId String
+
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, activityId])
+  @@index([activityId])
+}
+
+model EventItinerary {
+  id          String @id @default(cuid())
+  eventId     String
+  dayNumber   Int
+  title       String
+  description String?
+  sortOrder   Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventOption {
+  id          String        @id @default(cuid())
+  eventId     String
+  title       String
+  description String?
+  price       Decimal       @db.Decimal(12, 2) @default(0)
+  status      ContentStatus @default(PUBLISHED)
+  sortOrder   Int           @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventPolicy {
+  id        String @id @default(cuid())
+  eventId   String
+  title     String
+  content   String
+  sortOrder Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model Tour {
+  id               String        @id @default(cuid())
+  title            String
+  slug             String        @unique
+  shortDescription String?
+  description      String?
+  destinationId    String?
+  tourType         TourType      @default(FLEXIBLE_DATE)
+  coverMediaId     String?
+  duration         String?
+  durationDays     Int           @default(1)
+  basePrice        Decimal       @db.Decimal(12, 2)
+  discountPrice    Decimal?      @db.Decimal(12, 2)
+  highlights       String?
+  inclusions       String?
+  exclusions       String?
+  accommodation    String?
+  transport        String?
+  policies         String?
+  maxGroupSize     Int           @default(20)
+  difficulty       Difficulty    @default(EASY)
+  featured         Boolean       @default(false)
+  status           ContentStatus @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  destination Destination?    @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  coverMedia  MediaAsset?     @relation("TourCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  itinerary   TourItinerary[]
+
+  @@index([status])
+  @@index([destinationId])
+  @@index([featured])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_tour_title")
+  @@index([shortDescription(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_tour_shortdescription")
+}
+
+model TourItinerary {
+  id          String @id @default(cuid())
+  tourId      String
+  dayNumber   Int
+  title       String
+  description String?
+  sortOrder   Int    @default(0)
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@index([tourId])
+}
+
+model Activity {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  destinationId String?
+  coverMediaId  String?
+  shortDescription String?
+  description   String?
+  duration      String?
+  price         Decimal       @db.Decimal(12, 2) @default(0)
+  difficulty    Difficulty    @default(EASY)
+  minAge        Int?
+  maxAge        Int?
+  included      String?
+  excluded      String?
+  safetyInfo    String?
+  bookable      Boolean       @default(false)
+  trending      Boolean       @default(false)
+  status        ContentStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  destination    Destination?    @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  coverMedia     MediaAsset?     @relation("ActivityCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  eventActivities EventActivity[]
+
+  @@index([status])
+  @@index([trending])
+  @@index([destinationId])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_activity_name")
+}
+
+model Accommodation {
+  id            String            @id @default(cuid())
+  name          String
+  slug          String            @unique
+  type          AccommodationType @default(HOTEL)
+  destinationId String?
+  coverMediaId  String?
+  address       String?
+  shortDescription String?
+  description   String?
+  amenities     String?
+  rules         String?
+  policies      String?
+  checkInTime   String            @default("14:00")
+  checkOutTime  String            @default("12:00")
+  featured      Boolean           @default(false)
+  status        ContentStatus     @default(DRAFT)
+  seoTitle      String?
+  seoDescription String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  destination Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  coverMedia  MediaAsset?  @relation("AccommodationCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  roomTypes   RoomType[]
+
+  @@index([status])
+  @@index([destinationId])
+  @@index([type])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_accommodation_name")
+}
+
+model RoomType {
+  id              String        @id @default(cuid())
+  accommodationId String
+  name            String
+  description     String?
+  capacity        Int           @default(2)
+  price           Decimal       @db.Decimal(12, 2)
+  totalUnits      Int           @default(1)
+  amenities       String?
+  coverMediaId    String?
+  status          ContentStatus @default(PUBLISHED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  accommodation Accommodation   @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  coverMedia    MediaAsset?     @relation("RoomTypeCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  inventory     RoomInventory[]
+
+  @@index([accommodationId])
+  @@index([status])
+}
+
+model RoomInventory {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  date       DateTime @db.Date
+  totalUnits Int
+  bookedUnits Int     @default(0)
+  priceOverride Decimal? @db.Decimal(12, 2)
+  blocked    Boolean  @default(false)
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+  @@index([date])
+}
+
+// ---------------------------------------------------------------------------
+// Visa
+// ---------------------------------------------------------------------------
+
+model VisaCountry {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  slug        String        @unique
+  code        String?
+  description String?
+  flagMediaId String?
+  sortOrder   Int           @default(0)
+  status      ContentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  flagMedia MediaAsset? @relation("VisaCountryFlag", fields: [flagMediaId], references: [id], onDelete: SetNull)
+  visaTypes VisaType[]
+
+  @@index([status])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_visacountry_name")
+  @@index([slug(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_visacountry_slug")
+}
+
+model VisaType {
+  id                       String        @id @default(cuid())
+  countryId                String
+  name                     String
+  slug                     String
+  title                    String?
+  summary                  String?
+  importantNotes           String?
+  generalDocuments         String?
+  businessOwnerDocuments   String?
+  studentDocuments         String?
+  otherApplicantDocuments  String?
+  softCopyInstructions     String?
+  hardCopyInstructions     String?
+  processingInfo           String?
+  additionalInfo           String?
+  serviceFee               Decimal?      @db.Decimal(12, 2)
+  status                   ContentStatus @default(PUBLISHED)
+  seoTitle                 String?
+  seoDescription           String?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  country  VisaCountry   @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  requests VisaRequest[]
+
+  @@unique([countryId, slug])
+  @@index([status])
+}
+
+model VisaRequest {
+  id          String            @id @default(cuid())
+  userId      String?
+  visaTypeId  String?
+  name        String
+  email       String
+  phone       String
+  nationality String
+  message     String?
+  status      VisaRequestStatus @default(NEW)
+  assignedToId String?
+  staffNotes  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visaType   VisaType? @relation(fields: [visaTypeId], references: [id], onDelete: SetNull)
+  assignedTo User?     @relation("VisaAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Flights & trains (informational)
+// ---------------------------------------------------------------------------
+
+model Airport {
+  id        String   @id @default(cuid())
+  iata      String   @unique
+  name      String
+  city      String
+  country   String   @default("Bangladesh")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([city])
+}
+
+model FlightRoute {
+  id             String   @id @default(cuid())
+  airline        String
+  flightNumber   String
+  originIata     String
+  destinationIata String
+  departureTime  String
+  arrivalTime    String
+  durationMinutes Int
+  stops          Int      @default(0)
+  daysOfWeek     String   @default("1,2,3,4,5,6,7")
+  baggage        String?
+  indicativePrice Decimal? @db.Decimal(12, 2)
+  source         String   @default("AGENCY_MANAGED")
+  sourceUpdatedAt DateTime @default(now())
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([flightNumber, originIata, destinationIata])
+  @@index([originIata, destinationIata])
+  @@index([active])
+}
+
+model FlightInquiry {
+  id              String     @id @default(cuid())
+  userId          String?
+  airline         String?
+  flightNumber    String?
+  origin          String
+  destination     String
+  departureDate   DateTime?
+  returnDate      DateTime?
+  passengers      Int        @default(1)
+  displayedPrice  Decimal?   @db.Decimal(12, 2)
+  source          String?
+  sourceTimestamp DateTime?
+  name            String
+  email           String
+  phone           String
+  message         String?
+  status          LeadStatus @default(NEW)
+  assignedToId    String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignedTo User? @relation("FlightAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TrainSchedule {
+  id             String   @id @default(cuid())
+  trainName      String
+  trainNumber    String?
+  originStation  String
+  destinationStation String
+  departureTime  String
+  arrivalTime    String
+  durationMinutes Int?
+  offDay         String?
+  routeStops     String?
+  classesAvailable String?
+  source         String   @default("BANGLADESH_RAILWAY_PUBLIC")
+  sourceUpdatedAt DateTime @default(now())
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([originStation, destinationStation])
+  @@index([active])
+  @@index([originStation(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_trainschedule_originstation")
+  @@index([destinationStation(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_trainschedule_destinationstation")
+}
+
+// ---------------------------------------------------------------------------
+// Bookings, payments, invoices
+// ---------------------------------------------------------------------------
+
+model Booking {
+  id            String        @id @default(cuid())
+  bookingNumber String        @unique
+  userId        String
+  productType   ProductType
+  productId     String?
+  productTitle  String
+  startDate     DateTime?
+  endDate       DateTime?
+  quantity      Int           @default(1)
+  guests        Int           @default(1)
+  subtotal      Decimal       @db.Decimal(12, 2)
+  discount      Decimal       @db.Decimal(12, 2) @default(0)
+  fees          Decimal       @db.Decimal(12, 2) @default(0)
+  total         Decimal       @db.Decimal(12, 2)
+  currency      String        @default("BDT")
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  contactName   String
+  contactEmail  String
+  contactPhone  String
+  notes         String?
+  staffNotes    String?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    BookingItem[]
+  payments Payment[]
+  invoice  Invoice?
+  reviews  Review[]
+  roomHolds RoomBookingHold[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([productType, productId])
+  @@index([bookingNumber(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_booking_bookingnumber")
+  @@index([productTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_booking_producttitle")
+  @@index([contactName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_booking_contactname")
+  @@index([contactEmail(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_booking_contactemail")
+  @@index([contactPhone(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_booking_contactphone")
+}
+
+model BookingItem {
+  id            String      @id @default(cuid())
+  bookingId     String
+  productType   ProductType
+  productId     String?
+  nameSnapshot  String
+  descriptionSnapshot String?
+  quantity      Int         @default(1)
+  unitPrice     Decimal     @db.Decimal(12, 2)
+  discount      Decimal     @db.Decimal(12, 2) @default(0)
+  total         Decimal     @db.Decimal(12, 2)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model RoomBookingHold {
+  id         String   @id @default(cuid())
+  bookingId  String
+  roomTypeId String
+  date       DateTime @db.Date
+  units      Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, roomTypeId, date])
+  @@index([roomTypeId, date])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String
+  method            PaymentMethod
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("BDT")
+  status            PaymentStatus @default(PENDING_VERIFICATION)
+  senderNumber      String?
+  transactionId     String?
+  providerReference String?
+  metadata          String?
+  verifiedAt        DateTime?
+  verifiedById      String?
+  verificationNote  String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  booking    Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  verifiedBy User?   @relation("PaymentVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  bookingId     String   @unique
+  amount        Decimal  @db.Decimal(12, 2)
+  currency      String   @default("BDT")
+  issuedAt      DateTime @default(now())
+  dueAt         DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id               String     @id @default(cuid())
+  code             String     @unique
+  description      String?
+  type             CouponType @default(PERCENTAGE)
+  value            Decimal    @db.Decimal(12, 2)
+  minimumAmount    Decimal?   @db.Decimal(12, 2)
+  maxDiscount      Decimal?   @db.Decimal(12, 2)
+  usageLimit       Int?
+  usedCount        Int        @default(0)
+  perCustomerLimit Int        @default(1)
+  appliesTo        String?
+  startAt          DateTime?
+  endAt            DateTime?
+  active           Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([active])
+}
+
+// ---------------------------------------------------------------------------
+// Leads & requests
+// ---------------------------------------------------------------------------
+
+model CustomTourRequest {
+  id             String     @id @default(cuid())
+  userId         String?
+  name           String
+  email          String
+  phone          String
+  destination    String?
+  preferredDate  DateTime?
+  travelers      Int        @default(1)
+  budget         String?
+  duration       String?
+  travelStyle    String?
+  accommodationPreference String?
+  activities     String?
+  transport      String?
+  notes          String?
+  status         LeadStatus @default(NEW)
+  assignedToId   String?
+  quotedAmount   Decimal?   @db.Decimal(12, 2)
+  staffNotes     String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignedTo User? @relation("CustomTourAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ContactRequest {
+  id           String     @id @default(cuid())
+  userId       String?
+  name         String
+  email        String
+  phone        String
+  subject      String?
+  description  String
+  status       LeadStatus @default(NEW)
+  assignedToId String?
+  staffNotes   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user       User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignedTo User? @relation("ContactAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model NewsletterSubscriber {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  active       Boolean   @default(true)
+  confirmedAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Support, messaging, notifications
+// ---------------------------------------------------------------------------
+
+model SupportToken {
+  id           String        @id @default(cuid())
+  tokenNumber  String        @unique
+  customerId   String
+  subject      String
+  description  String
+  category     String        @default("GENERAL")
+  priority     Priority      @default(NORMAL)
+  status       SupportStatus @default(PENDING)
+  assignedToId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  customer   User             @relation("SupportCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  assignedTo User?            @relation("SupportAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages   SupportMessage[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id          String      @id @default(cuid())
+  tokenId     String
+  senderId    String
+  body        String
+  messageType MessageType @default(CUSTOMER)
+  createdAt   DateTime    @default(now())
+
+  token  SupportToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  sender User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId])
+}
+
+model Conversation {
+  id         String        @id @default(cuid())
+  customerId String
+  subject    String
+  status     SupportStatus @default(PENDING)
+  lastMessageAt DateTime   @default(now())
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  customer     User                      @relation("ConversationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  messageType    MessageType @default(CUSTOMER)
+  readAt         DateTime?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  type       NotificationType @default(SYSTEM)
+  title      String
+  message    String
+  targetType String?
+  targetId   String?
+  link       String?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews, wishlist, content
+// ---------------------------------------------------------------------------
+
+model Review {
+  id        String       @id @default(cuid())
+  bookingId String?
+  userId    String
+  productType ProductType
+  productId String?
+  rating    Int
+  title     String?
+  body      String
+  status    ReviewStatus @default(PENDING)
+  featured  Boolean      @default(false)
+  moderationNote String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, userId])
+  @@index([status])
+  @@index([productType, productId])
+}
+
+model WishlistItem {
+  id        String           @id @default(cuid())
+  userId    String
+  itemType  WishlistItemType
+  itemId    String
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@index([userId])
+}
+
+model Service {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  icon        String?
+  summary     String?
+  description String?
+  sortOrder   Int           @default(0)
+  status      ContentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model Post {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  excerpt      String?
+  body         String
+  coverMediaId String?
+  categoryId   String?
+  authorId     String?
+  // Denormalised so a deleted staff account does not erase the byline.
+  authorName   String?
+  tags         String?
+  readMinutes  Int           @default(4)
+  views        Int           @default(0)
+  featured     Boolean       @default(false)
+  commentsOpen Boolean       @default(true)
+  publishedAt  DateTime?
+  status       ContentStatus @default(DRAFT)
+  seoTitle     String?
+  seoDescription String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  coverMedia MediaAsset?   @relation("PostCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  category   PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author     User?         @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  comments   PostComment[]
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([featured])
+  @@index([views])
+  @@index([status, publishedAt])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_post_title")
+  @@index([excerpt(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_post_excerpt")
+}
+
+/// Blog categories. Kept as their own table rather than a free-text column so
+/// the sidebar can show counts and each category can have its own page.
+model PostCategory {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  slug        String        @unique
+  description String?
+  position    Int           @default(0)
+  status      ContentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  posts Post[]
+
+  @@index([status])
+  @@index([position])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_postcategory_name")
+}
+
+/// A reader comment. Nothing is public until a moderator approves it, so the
+/// default status is PENDING and the public query filters on APPROVED only.
+model PostComment {
+  id         String        @id @default(cuid())
+  postId     String
+  // Set when a signed-in reader comments; anonymous comments carry only the
+  // name and email typed into the form.
+  userId     String?
+  parentId   String?
+  authorName String
+  authorEmail String
+  body       String
+  status     CommentStatus @default(PENDING)
+  // Truncated SHA-256 of the submitter IP. Enough to spot one abusive source,
+  // not enough to reconstruct the address.
+  ipHash     String?
+  moderationNote String?
+  moderatedAt    DateTime?
+  moderatedById  String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  post        Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user        User?         @relation("CommentAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  moderatedBy User?         @relation("CommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  parent      PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     PostComment[] @relation("CommentReplies")
+
+  @@index([postId, status])
+  @@index([status, createdAt])
+  @@index([parentId])
+  @@index([authorName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_postcomment_authorname")
+  @@index([authorEmail(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_postcomment_authoremail")
+  @@index([body(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_postcomment_body")
+}
+
+
+model LegalPage {
+  id        String        @id @default(cuid())
+  title     String
+  slug      String        @unique
+  body      String
+  status    ContentStatus @default(PUBLISHED)
+  updatedAt DateTime      @updatedAt
+  createdAt DateTime      @default(now())
+}
+
+model FaqItem {
+  id        String        @id @default(cuid())
+  question  String
+  answer    String
+  category  String        @default("GENERAL")
+  sortOrder Int           @default(0)
+  status    ContentStatus @default(PUBLISHED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([category])
+  @@index([question(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_faqitem_question")
+  @@index([answer(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_faqitem_answer")
+}
+
+model HomeSection {
+  id        String        @id @default(cuid())
+  key       String        @unique
+  title     String?
+  subtitle  String?
+  body      String?
+  config    String?
+  sortOrder Int           @default(0)
+  enabled   Boolean       @default(true)
+  updatedAt DateTime      @updatedAt
+  createdAt DateTime      @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Marketing
+// ---------------------------------------------------------------------------
+
+model Notice {
+  id        String     @id @default(cuid())
+  title     String
+  message   String
+  type      NoticeType @default(INFO)
+  ctaText   String?
+  ctaUrl    String?
+  startAt   DateTime?
+  endAt     DateTime?
+  priority  Int        @default(0)
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([active])
+}
+
+model Advertisement {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  mediaId     String?
+  imageUrl    String?
+  ctaText     String?
+  ctaUrl      String?
+  placement   AdPlacement @default(HOME_BILLBOARD)
+  frequency   Int         @default(1)
+  frequencyWindow AdFrequencyWindow @default(SESSION)
+  priority    Int         @default(0)
+  startAt     DateTime?
+  endAt       DateTime?
+  impressions Int         @default(0)
+  clicks      Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  media MediaAsset? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([active, placement])
+}
+
+// ---------------------------------------------------------------------------
+// Finance
+// ---------------------------------------------------------------------------
+
+model FinancialTransaction {
+  id              String          @id @default(cuid())
+  type            TransactionType
+  category        String
+  amount          Decimal         @db.Decimal(12, 2)
+  currency        String          @default("BDT")
+  referenceType   String?
+  referenceId     String?
+  description     String?
+  transactionDate DateTime        @default(now())
+  createdById     String?
+  createdAt       DateTime        @default(now())
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([transactionDate])
+  @@index([category])
+}
+
+model Expense {
+  id              String        @id @default(cuid())
+  category        String
+  amount          Decimal       @db.Decimal(12, 2)
+  description     String?
+  employeeId      String?
+  expenseDate     DateTime      @default(now())
+  receiptMediaId  String?
+  status          ExpenseStatus @default(PENDING)
+  createdById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  employee      User?       @relation("ExpenseEmployee", fields: [employeeId], references: [id], onDelete: SetNull)
+  createdBy     User?       @relation("ExpenseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  receiptMedia  MediaAsset? @relation(fields: [receiptMediaId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([expenseDate])
+  @@index([category])
+}
+
+model SalaryRecord {
+  id          String        @id @default(cuid())
+  employeeId  String
+  period      String
+  grossAmount Decimal       @db.Decimal(12, 2)
+  deductions  Decimal       @db.Decimal(12, 2) @default(0)
+  netAmount   Decimal       @db.Decimal(12, 2)
+  status      ExpenseStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  employee User @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, period])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Home page composition
+// ---------------------------------------------------------------------------
+
+model HeroSlide {
+  id               String    @id @default(cuid())
+  title            String
+  subtitle         String?
+  body             String?
+  mediaId          String?
+  overlayOpacity   Int       @default(40)
+  textAlign        String    @default("center")
+  primaryCtaText   String?
+  primaryCtaUrl    String?
+  secondaryCtaText String?
+  secondaryCtaUrl  String?
+  showSearch       Boolean   @default(true)
+  startAt          DateTime?
+  endAt            DateTime?
+  sortOrder        Int       @default(0)
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  media MediaAsset? @relation("HeroMedia", fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([active, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard page access control
+// ---------------------------------------------------------------------------
+
+model DashboardPage {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  label      String
+  group      String
+  path       String
+  permission String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  access RolePageAccess[]
+
+  @@index([group])
+}
+
+model RolePageAccess {
+  roleId  String
+  pageId  String
+  allowed Boolean @default(true)
+
+  role Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  page DashboardPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, pageId])
+  @@index([pageId])
+}
+
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorLabel String?
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([action(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_auditlog_action")
+  @@index([entityType(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_auditlog_entitytype")
+  @@index([entityId(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_auditlog_entityid")
+  @@index([actorLabel(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_auditlog_actorlabel")
+}
+
+// ---------------------------------------------------------------------------
+// Contests
+// ---------------------------------------------------------------------------
+
+/// A photo/video contest people enter and vote on.
+///
+/// Which phase the contest is in is derived from the dates, not stored: a
+/// stored phase would need a scheduled job to advance it, and would be wrong
+/// for exactly as long as that job was late. `status` only decides whether the
+/// contest is public at all.
+model Contest {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  tagline       String?
+  /// What the contest is about, in Markdown.
+  description   String
+  /// The theme entrants are shooting for, e.g. "Monsoon in the hills".
+  theme         String?
+  rules         String?
+  prizeSummary  String?
+  coverMediaId  String?
+  status        ContestStatus @default(DRAFT)
+
+  // Timeline. Entries open at startAt, close at entryDeadline; voting runs
+  // between votingStartAt and votingEndAt; results appear from resultsAt.
+  startAt        DateTime
+  entryDeadline  DateTime
+  votingStartAt  DateTime?
+  votingEndAt    DateTime?
+  resultsAt      DateTime?
+
+  // Entry rules.
+  allowImages       Boolean @default(true)
+  allowVideos       Boolean @default(true)
+  /// Hard cap per entrant, counted across approved and pending entries.
+  maxEntriesPerUser Int     @default(1)
+  maxImageBytes     Int     @default(2097152)
+  maxVideoSeconds   Int     @default(20)
+
+  /// How much the public vote counts toward the combined score, as a
+  /// percentage. The judges' marks carry the rest.
+  publicVoteWeight Int @default(25)
+  /// How many entries reach the voting round.
+  shortlistSize    Int @default(10)
+
+  /// Pin to the home page while live. The navbar link appears on its own
+  /// whenever a contest is published and has not finished.
+  featureOnHome Boolean @default(true)
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coverMedia MediaAsset?          @relation("ContestCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  prizes     ContestPrize[]
+  judges     ContestJudge[]
+  sponsors   ContestSponsor[]
+  gallery    ContestGalleryItem[]
+  entries    ContestEntry[]
+  votes      ContestVote[]
+
+  @@index([status])
+  @@index([status, entryDeadline])
+  @@index([startAt])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_contest_title")
+}
+
+model ContestPrize {
+  id          String  @id @default(cuid())
+  contestId   String
+  /// 1 for first place, 2 for second, and so on. 0 for a non-ranked prize.
+  position    Int     @default(0)
+  title       String
+  description String?
+  /// Free text so "3 nights in Sajek" is as valid as "50,000 BDT".
+  value       String?
+  mediaId     String?
+  sortOrder   Int     @default(0)
+
+  contest Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  media   MediaAsset? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([contestId, position])
+}
+
+model ContestJudge {
+  id         String  @id @default(cuid())
+  contestId  String
+  name       String
+  role       String?
+  bio        String?
+  profileUrl String?
+  mediaId    String?
+  sortOrder  Int     @default(0)
+
+  contest Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  media   MediaAsset? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([contestId, sortOrder])
+}
+
+model ContestSponsor {
+  id         String  @id @default(cuid())
+  contestId  String
+  name       String
+  tier       String?
+  websiteUrl String?
+  mediaId    String?
+  sortOrder  Int     @default(0)
+
+  contest Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  media   MediaAsset? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([contestId, sortOrder])
+}
+
+/// Pictures the agency adds itself — last year's winners, the location, the
+/// prizes in the flesh. Nothing entrants upload appears here.
+model ContestGalleryItem {
+  id        String  @id @default(cuid())
+  contestId String
+  mediaId   String
+  caption   String?
+  sortOrder Int     @default(0)
+
+  contest Contest    @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  media   MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([contestId, sortOrder])
+}
+
+/// One submission.
+///
+/// The entrant must be signed in — `userId` is required — so that a person
+/// cannot enter repeatedly behind different names, and so the agency has an
+/// account to contact if they win. The contact fields are still stored
+/// separately: what someone types on the entry form is what they want used for
+/// the contest, which is not always what is on their account.
+model ContestEntry {
+  id        String @id @default(cuid())
+  contestId String
+  userId    String
+
+  entrantName  String
+  entrantEmail String
+  entrantPhone String
+  /// Facebook, LinkedIn or any other profile they want credited.
+  socialUrl    String?
+  location     String
+  description  String
+
+  mediaId String
+
+  status ContestEntryStatus @default(PENDING)
+
+  /// Judges' mark out of 100. Combined with the public vote share using the
+  /// contest's publicVoteWeight to produce the ranking staff see.
+  judgeScore Int?
+  /// Final placing, set by staff. 1, 2 or 3 for the winners.
+  rank       Int?
+
+  /// Kept in step with the ContestVote rows inside the same transaction, so
+  /// the gallery can sort by popularity without counting rows per card.
+  voteCount Int @default(0)
+
+  moderationNote String?
+  moderatedAt    DateTime?
+  moderatedById  String?
+
+  /// Truncated hash of the submitting IP. Enough to spot one person entering
+  /// from a script, not enough to recover the address.
+  ipHash String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contest     Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user        User          @relation("ContestEntrant", fields: [userId], references: [id], onDelete: Cascade)
+  media       MediaAsset    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  moderatedBy User?         @relation("ContestEntryModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  votes       ContestVote[]
+
+  @@index([contestId, status])
+  @@index([contestId, voteCount])
+  @@index([contestId, rank])
+  @@index([userId])
+  @@index([entrantName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_contestentry_name")
+  @@index([entrantEmail(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_trgm_contestentry_email")
+}
+
+/// One vote. The unique constraint on (contestId, userId) is the whole
+/// anti-ballot-stuffing design: one signed-in person, one vote per contest,
+/// enforced by the database rather than by a check that could be raced.
+model ContestVote {
+  id        String   @id @default(cuid())
+  contestId String
+  entryId   String
+  userId    String
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  contest Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  entry   ContestEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([entryId])
+}

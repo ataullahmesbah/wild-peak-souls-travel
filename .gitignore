@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+.env
+.env.local
+.env.*.local
+
+*.log
+npm-debug.log*
+.DS_Store
+.vscode/
+.idea/
+
+/src/generated/
+next-env.d.ts
+*.tsbuildinfo
+coverage/
+
+# Alternative build output directory (see next.config.ts / TROUBLESHOOTING).
+.next-*
