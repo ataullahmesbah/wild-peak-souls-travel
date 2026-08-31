@@ -368,3 +368,42 @@ These are deliberate scope boundaries, not defects:
 | `docs/V2_CHANGES.md` | What v2 added, what it fixed, and how it was verified |
 | `docs/UPGRADING.md` | **Upgrading a live v1 database to v2 without losing data** |
 # wild-peak-souls-travel
+
+
+👨‍💻 Developer & Project Owner
+<div align="center">
+Ataullah Mesbah
+High-Level, Super-Fast Full-Stack Developer
+🚀 About Me
+I'm a passionate full-stack developer with expertise in building scalable, high-performance web applications. I specialize in modern JavaScript ecosystems, cloud-native architectures, and delivering pixel-perfect user experiences.
+
+What I Do:
+
+🏗️ Architecture: Design scalable, maintainable system architectures
+
+⚡ Performance: Optimize applications for speed and efficiency
+
+🔒 Security: Implement robust security practices and data protection
+
+🎨 UX: Create intuitive, beautiful user interfaces
+
+☁️ Cloud: Deploy and manage applications on Vercel, AWS, and Docker
+
+📫 Connect With Me
+<div align="center">
+https://img.shields.io/badge/%F0%9F%8C%90_Portfolio-ataullahmesbah.com-000000?style=for-the-badge
+https://img.shields.io/badge/%F0%9F%93%A7_Contact_Page-ataullahmesbah.com/contact-0A66C2?style=for-the-badge
+https://img.shields.io/badge/%F0%9F%90%99_GitHub-github.com/ataullahmesbah-181717?style=for-the-badge
+https://img.shields.io/badge/%F0%9F%94%97_LinkedIn-ataullahmesbah-0A66C2?style=for-the-badge
+
+</div>
+🔗 Backlink to Developer
+<div align="center">
+This project is proudly developed by
+
+https://img.shields.io/badge/%E2%AC%85%EF%B8%8F_Back_to_Developer_Portfolio-ataullahmesbah.com-000000?style=for-the-badge&logo=vercel
+
+Need a similar project?
+📩 Hire me — Let's build something amazing together!
+
+</div>
