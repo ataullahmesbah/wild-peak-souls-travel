@@ -437,7 +437,7 @@ I specialize in modern JavaScript ecosystems, cloud-native architectures, databa
   <img src="https://img.shields.io/badge/🐙_GitHub-ataullahmesbah-181717?style=for-the-badge&logo=github" alt="GitHub">
 </a>
 
-<a href="https://www.linkedin.com/in/ataullahmesbah">
+<a href="https://www.linkedin.com/in/ataullah-mesbah/h">
   <img src="https://img.shields.io/badge/🔗_LinkedIn-Ataullah_Mesbah-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn">
 </a>
 
